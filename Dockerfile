@@ -1,6 +1,6 @@
 FROM ubuntu:17.10
 
-EXPOSE 27015
+EXPOSE 27015/udp
 
 ENV USER csgo
 ENV HOME /home/$USER
@@ -13,10 +13,12 @@ RUN apt-get -y update \
     && useradd -ms /bin/bash $USER
 
 RUN mkdir $SERVER
-ADD ./start_csgo.sh $SERVER/start_csgo.sh
-RUN chown $USER:$USER $SERVER/start_csgo.sh
-RUN chmod +x $SERVER/start_csgo.sh
+ADD ./start_csgo.sh $HOME/start_csgo.sh
+RUN chown $USER:$USER $HOME/start_csgo.sh
+RUN chmod +x $HOME/start_csgo.sh
 RUN chown $USER:$USER $SERVER
+ADD ./csgo_update.txt $HOME/csgo_update.txt
+RUN chown $USER:$USER $HOME/csgo_update.txt
 
 USER $USER
 WORKDIR $HOME
@@ -24,10 +26,8 @@ WORKDIR $HOME
 RUN wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
 		 && tar -xvzf steamcmd_linux.tar.gz
 
-RUN ./steamcmd.sh +login anonymous +force_install_dir $SERVER +app_update 740 validate +quit
+RUN ./steamcmd.sh +runscript ./csgo_update.txt
 
 ADD cfg/* $SERVER/csgo/cfg/
-
-WORKDIR $SERVER
 
 ENTRYPOINT ["./start_csgo.sh"]
